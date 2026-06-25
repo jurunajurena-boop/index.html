@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validação de Segurança</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+            color: #111;
+            font-size: 24px;
+        }
+
+        p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        /* Form Estilos */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="password"]:focus {
+            border-color: #007bff;
+        }
+
+        /* Camera Estilos */
+        .camera-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 25px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #000;
+            border: 4px solid #007bff;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Espelhar a imagem para ficar natural */
+        }
+
+        .overlay-ellipse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 80%;
+            border: 2px dashed rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Botões */
+        .btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="step-auth" class="step active">
+        <h2>Validação de Dispositivo</h2>
+        <p>Insira sua senha de segurança para授权 o acesso neste dispositivo.</p>
+        
+        <div class="input-group">
+            <label for="password">Senha de Acesso</label>
+            <input type="password" id="password" placeholder="Digite sua senha">
+        </div>
+        
+        <button class="btn" onclick="validatePassword()">Avançar</button>
+        <p id="password-error" class="error-message">Por favor, insira a senha.</p>
+    </div>
+
+    <div id="step-biometry" class="step">
+        <h2>Verificação Facial</h2>
+        <p>Posicione seu rosto dentro da área demarcada e aguarde a captura automática.</p>
+        
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="overlay-ellipse"></div>
+        </div>
+        
+        <button class="btn" onclick="finishValidation()">Confirmar Identidade</button>
+        <p id="camera-error" class="error-message"></p>
+    </div>
+
+    <div id="step-success" class="step">
+        <h2>Acesso Permitido</h2>
+        <p style="color: #28a745; font-weight: 600;">Seu dispositivo e identidade foram validados com sucesso!</p>
+    </div>
+</div>
+
+<script>
+    // Gerenciamento de Etapas
+    function nextStep(currentId, nextId) {
+        document.getElementById(currentId).classList.remove('active');
+        document.getElementById(nextId).classList.add('active');
+    }
+
+    // Validação Simples da Primeira Etapa
+    function validatePassword() {
+        const passwordInput = document.getElementById('password').value;
+        const errorMsg = document.getElementById('password-error');
+
+        if (passwordInput.trim() === "") {
+            errorMsg.style.display = "block";
+            errorMsg.innerText = "Por favor, digite sua senha de segurança.";
+        } else {
+            errorMsg.style.display = "none";
+            nextStep('step-auth', 'step-biometry');
+            startCamera(); // Inicia a câmera assim que passa de etapa
+        }
+    }
+
+    // Inicialização da Câmera
+    async function startCamera() {
+        const video = document.getElementById('video');
+        const cameraError = document.getElementById('camera-error');
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 400, height: 400, facingMode: "user" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Erro ao acessar a câmera: ", err);
+            cameraError.style.display = "block";
+            cameraError.innerText = "Não foi possível acessar a câmera. Verifique as permissões do seu navegador.";
+        }
+    }
+
+    // Conclusão do Fluxo
+    function finishValidation() {
+        // Aqui você integraria com sua API ou backend para salvar os dados
+        const video = document.getElementById('video');
+        
+        // Desliga a câmera para economizar recursos
+        if (video.srcObject) {
+            const tracks = video.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+
+        nextStep('step-biometry', 'step-success');
+    }
+</script>
+
+</body>
+</html>
