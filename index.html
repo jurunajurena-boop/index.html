@@ -1,12 +1,314 @@
-<div class="input-group">
-    <label for="password">Senha Eletrônica</label>
-    <input 
-        type="text" 
-        id="password" 
-        inputmode="numeric" 
-        pattern="[0-9]*" 
-        maxlength="6" 
-        placeholder="Digite sua senha"
-        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
-    >
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agibank - Validação de Segurança</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: #f7fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #2d3748;
+        }
+
+        .container {
+            position: relative; /* Necessário para posicionar a marca d'água */
+            background: #ffffff;
+            padding: 35px 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border-top: 6px solid #005691; /* Azul Agibank */
+            overflow: hidden;
+        }
+
+        /* Marca d'água discreta no fundo do container */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            font-size: 42px;
+            font-weight: 900;
+            color: rgba(0, 86, 145, 0.04); /* Muito suave para não atrapalhar */
+            pointer-events: none;
+            white-space: nowrap;
+            text-transform: lowercase;
+            user-select: none;
+        }
+        
+        .watermark span {
+            color: rgba(36, 180, 126, 0.04);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            color: #005691;
+            margin-bottom: 5px;
+            letter-spacing: -1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo span {
+            color: #24b47e; /* Verde Agibank */
+        }
+
+        h2 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #1a202c;
+            font-size: 20px;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+
+        p {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step {
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        /* Formulário */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        /* Alterado para tipo texto visível com estilo focado em dígitos */
+        input[type="text"].password-visible {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-align: center;
+            outline: none;
+            transition: all 0.2s;
+            background-color: #f8fafc;
+        }
+
+        input[type="text"].password-visible:focus {
+            border-color: #005691;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(0, 86, 145, 0.1);
+        }
+
+        /* Câmera / Biometria */
+        .camera-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 0 auto 25px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: #1a202c;
+            border: 4px solid #24b47e;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .overlay-ellipse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            height: 85%;
+            border: 2px dashed rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Botões */
+        .btn {
+            background-color: #005691;
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #00406c;
+        }
+
+        .btn-secondary {
+            background-color: #24b47e;
+        }
+
+        .btn-secondary:hover {
+            background-color: #1c9466;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .secure-footer {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #a0aec0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Marca d'água interna de fundo -->
+    <div class="watermark">agi<span>bank</span></div>
+
+    <div class="logo">agi<span>bank</span></div>
+
+    <div id="step-auth" class="step active">
+        <h2>Validação de Dispositivo</h2>
+        <p>Para garantir a segurança das suas transações, confirme a sua senha de acesso de 6 dígitos.</p>
+        
+        <div class="input-group">
+            <label for="password">Senha Eletrônica</label>
+            <!-- Modificado para type="text" para manter visível, com restrição de números -->
+            <input type="text" id="password" class="password-visible" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Digite sua senha">
+        </div>
+        
+        <button class="btn" onclick="validatePassword()">Avançar</button>
+        <p id="password-error" class="error-message"></p>
+    </div>
+
+    <div id="step-biometry" class="step">
+        <h2>Validação Facial</h2>
+        <p>Agora, posicione o seu rosto dentro da marcação abaixo em um ambiente iluminado.</p>
+        
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="overlay-ellipse"></div>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="finishValidation()">Enquadrar e Confirmar</button>
+        <p id="camera-error" class="error-message"></p>
+    </div>
+
+    <div id="step-success" class="step">
+        <h2 style="color: #24b47e;">Dispositivo Validado!</h2>
+        <p>Sua identidade foi confirmada com sucesso. Este dispositivo agora está autorizado para movimentações com segurança.</p>
+        <button class="btn" onclick="location.reload()">Finalizar</button>
+    </div>
+
+    <div class="secure-footer">
+        🔒 Conexão segura ponta a ponta
+    </div>
 </div>
+
+<script>
+    function nextStep(currentId, nextId) {
+        document.getElementById(currentId).classList.remove('active');
+        document.getElementById(nextId).classList.add('active');
+    }
+
+    function validatePassword() {
+        const passwordInput = document.getElementById('password').value;
+        const errorMsg = document.getElementById('password-error');
+
+        if (passwordInput.trim().length < 4) {
+            errorMsg.style.display = "block";
+            errorMsg.innerText = "Por favor, insira uma senha válida.";
+        } else {
+            errorMsg.style.display = "none";
+            nextStep('step-auth', 'step-biometry');
+            startCamera();
+        }
+    }
+
+    async function startCamera() {
+        const video = document.getElementById('video');
+        const cameraError = document.getElementById('camera-error');
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { width: 300, height: 300, facingMode: "user" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+        } catch (err) {
+            console.error("Erro na câmera: ", err);
+            cameraError.style.display = "block";
+            cameraError.innerText = "Permissão de câmera negada ou não encontrada. Verifique as configurações.";
+        }
+    }
+
+    function finishValidation() {
+        const video = document.getElementById('video');
+        
+        if (video.srcObject) {
+            const tracks = video.srcObject.getTracks();
+            tracks.forEach(track => track.stop());
+        }
+
+        nextStep('step-biometry', 'step-success');
+    }
+
+    // Força a entrada de apenas números no campo de texto
+    document.getElementById('password').addEventListener('input', function (e) {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
+</script>
+
+</body>
+</html>
